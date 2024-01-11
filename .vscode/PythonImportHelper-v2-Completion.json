@@ -1,0 +1,47 @@
+[
+    {
+        "label": "streamlit",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "streamlit",
+        "description": "streamlit",
+        "detail": "streamlit",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "locale",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "locale",
+        "description": "locale",
+        "detail": "locale",
+        "documentation": {}
+    },
+    {
+        "label": "get_property_type",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def get_property_type(description):\n    # Extract the property type from the description\n    return description.split(',')[0].strip()\ndef main():\n    st.title('Visualizador de Imóveis da Caixa')\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv'\n    df = pd.read_csv(url_csv, encoding='latin1', sep=';', skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df['N° do imóvel'] = df['N° do imóvel'].astype(str).str.zfill(13)",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def main():\n    st.title('Visualizador de Imóveis da Caixa')\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv'\n    df = pd.read_csv(url_csv, encoding='latin1', sep=';', skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df['N° do imóvel'] = df['N° do imóvel'].astype(str).str.zfill(13)\n    df['Preço'] = pd.to_numeric(df['Preço'].astype(str).str.replace('.', '').str.replace(',', '.'), errors='coerce')\n    df['Valor de avaliação'] = pd.to_numeric(df['Valor de avaliação'].astype(str).str.replace('.', '').str.replace(',', '.'), errors='coerce')\n    df['Desconto'] = pd.to_numeric(df['Desconto'].astype(str).str.replace(',', '.'), errors='coerce')",
+        "detail": "main",
+        "documentation": {}
+    }
+]
