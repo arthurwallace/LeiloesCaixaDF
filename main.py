@@ -76,7 +76,7 @@ def main():
         matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
 
         st.image(imagem_url, width=200)
-        with st.expander(f"{modalidade_venda}\n\n{cidade_bairro_uf}\n\n{descricao}\n\n**Preço:** {preco}ㅤㅤㅤㅤㅤ **Avaliação:** {avaliacao}ㅤㅤㅤㅤㅤ ㅤ**Desconto:** {desconto}%"):
+        with st.expander(f"{modalidade_venda}\n\n{cidade_bairro_uf}\n\n{descricao}\n\n**Preço:** {preco} // **Avaliação:** {avaliacao} // **Desconto:** {desconto}%"):
             st.divider()
             st.write(f"**Modalidade de Venda:** {modalidade_venda}")
             st.write(f"**Preço Mínimo:** {preco}")
@@ -89,6 +89,12 @@ def main():
             st.divider()
             st.write(f"Matrícula: ", matricula)
             st.image(imagem_url, caption='Imagem do Imóvel')
+            
+        
+    
+    
+    st.divider()
+    st.info('Desenvolvido por Arthur Wallace - 2024', icon="ℹ️")
 
 if __name__ == "__main__":
     main()
