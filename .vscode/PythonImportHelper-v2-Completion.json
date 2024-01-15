@@ -84,7 +84,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    #send_email(\"Novos imóvel Caixa Adicionados!\", \"Teste email\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = pd.to_numeric(\n        df[\"Preço\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),",
+        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = pd.to_numeric(\n        df[\"Preço\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),\n        errors=\"coerce\",",
         "detail": "main",
         "documentation": {}
     },

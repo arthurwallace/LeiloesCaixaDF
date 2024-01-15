@@ -141,7 +141,6 @@ def formatar_novos_imoveis(df_novos):
 def main():
     st.title("Visualizador de Imóveis da Caixa")
     
-    #send_email("Novos imóvel Caixa Adicionados!", "Teste email")
 
     # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
     url_csv = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv"
@@ -173,7 +172,8 @@ def main():
         # Adicione a string formatada ao corpo do e-mail
         alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
         alert_body += formatar_novos_imoveis(novos_imoveis)
-        #send_email(alert_subject, alert_body)
+        alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
+        send_email(alert_subject, alert_body)
         print(alert_body)
         st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
         imprimir_imoveis(novos_imoveis)
