@@ -27,11 +27,55 @@
         "documentation": {}
     },
     {
+        "label": "Courier",
+        "importPath": "trycourier",
+        "description": "trycourier",
+        "isExtraImport": true,
+        "detail": "trycourier",
+        "documentation": {}
+    },
+    {
         "label": "get_property_type",
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def get_property_type(description):\n    # Extract the property type from the description\n    return description.split(',')[0].strip()\ndef main():\n    st.title('Visualizador de Imóveis da Caixa')\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv'\n    df = pd.read_csv(url_csv, encoding='latin1', sep=';', skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df['N° do imóvel'] = df['N° do imóvel'].astype(str).str.zfill(13)",
+        "peekOfCode": "def get_property_type(description):\n    # Extract the property type from the description\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "send_email",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}\n            # ,\n            # \"data\":{\n            # \"info\": \"Por favor, resete sua senha o quanto antes em:  \" + reset_url + \"\"",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "verificar_novos_imoveis",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def verificar_novos_imoveis(df_atual):\n    try:\n        # Tentar carregar o arquivo de dados recentes\n        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)\n        df_anterior[\"N° do imóvel\"] = df_anterior[\"N° do imóvel\"].astype(str).str.zfill(13)\n        df_anterior[\"Preço\"] = pd.to_numeric(\n            df_anterior[\"Preço\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),\n            errors=\"coerce\",\n        )\n        df_anterior[\"Valor de avaliação\"] = pd.to_numeric(",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "imprimir_imoveis",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def imprimir_imoveis(df):\n    for index, row in df.iterrows():\n        imagem_url = (\n            f\"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg\"\n        )\n        modalidade_venda = row[\"Modalidade de venda\"]\n        cidade_bairro_uf = f\"{row['Cidade']}, {row['Bairro']} - {row['UF']}\"\n        descricao = row[\"Descrição\"]\n        preco = locale.currency(row[\"Preço\"], grouping=True).replace(\"$\", \"\\$\")\n        avaliacao = locale.currency(row[\"Valor de avaliação\"], grouping=True)",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "formatar_novos_imoveis",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def formatar_novos_imoveis(df_novos):\n    # Crie uma string formatada com os detalhes dos novos imóveis\n    formatted_string = \"\"\n    for index, row in df_novos.iterrows():\n        formatted_string += (\n            f\"N° do Imóvel: {row['N° do imóvel']}\\n\"\n            f\"Cidade: {row['Cidade']}\\n\"\n            f\"Modalidade de Venda: {row['Modalidade de venda']}\\n\"\n            f\"Tipo de Imóvel: {row['Tipo de Imóvel']}\\n\"\n            f\"Descrição: {row['Descrição']}\\n\"",
         "detail": "main",
         "documentation": {}
     },
@@ -40,7 +84,16 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.title('Visualizador de Imóveis da Caixa')\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = 'https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv'\n    df = pd.read_csv(url_csv, encoding='latin1', sep=';', skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df['N° do imóvel'] = df['N° do imóvel'].astype(str).str.zfill(13)\n    df['Preço'] = pd.to_numeric(df['Preço'].astype(str).str.replace('.', '').str.replace(',', '.'), errors='coerce')\n    df['Valor de avaliação'] = pd.to_numeric(df['Valor de avaliação'].astype(str).str.replace('.', '').str.replace(',', '.'), errors='coerce')\n    df['Desconto'] = pd.to_numeric(df['Desconto'].astype(str).str.replace(',', '.'), errors='coerce')",
+        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    #send_email(\"Novos imóvel Caixa Adicionados!\", \"Teste email\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = pd.to_numeric(\n        df[\"Preço\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
+        "label": "ARQUIVO_DADOS_RECENTES",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "ARQUIVO_DADOS_RECENTES = 'dados_recentes.csv'\ndef get_property_type(description):\n    # Extract the property type from the description\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},",
         "detail": "main",
         "documentation": {}
     }
