@@ -61,6 +61,41 @@
         "documentation": {}
     },
     {
+        "label": "aiohttp",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "aiohttp",
+        "description": "aiohttp",
+        "detail": "aiohttp",
+        "documentation": {}
+    },
+    {
+        "label": "ClientSession",
+        "importPath": "aiohttp",
+        "description": "aiohttp",
+        "isExtraImport": true,
+        "detail": "aiohttp",
+        "documentation": {}
+    },
+    {
+        "label": "asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "asyncio",
+        "description": "asyncio",
+        "detail": "asyncio",
+        "documentation": {}
+    },
+    {
+        "label": "nest_asyncio",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "nest_asyncio",
+        "description": "nest_asyncio",
+        "detail": "nest_asyncio",
+        "documentation": {}
+    },
+    {
         "label": "get_property_type",
         "kind": 2,
         "importPath": "main",
@@ -83,7 +118,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def verificar_novos_imoveis(df_atual):\n    try:\n        # Tentar carregar o arquivo de dados recentes\n        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)\n        df_anterior = format_data_frame(df_anterior)\n    except FileNotFoundError:\n        df_anterior = pd.DataFrame()\n    if not df_anterior.empty:\n        # Identificar novos imóveis\n        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]",
+        "peekOfCode": "def verificar_novos_imoveis(df_atual):\n    try:\n        # Tentar carregar o arquivo de dados recentes\n        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)\n    except (FileNotFoundError, pd.errors.EmptyDataError):\n        df_anterior = pd.DataFrame()\n    if not df_anterior.empty:\n        df_anterior = format_data_frame(df_anterior)\n        # Identificar novos imóveis\n        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]",
         "detail": "main",
         "documentation": {}
     },
@@ -92,7 +127,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def get_data_leilao(url):\n    headers = {\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}\n    try:\n        response = requests.get(url, headers=headers)\n        soup = BeautifulSoup(response.text, 'html.parser')\n        # Encontrar o elemento <i> com a classe 'fa-gavel'\n        icon_element = soup.find('i', {'class': 'fa-gavel'})\n        # Verificar se o elemento foi encontrado\n        if icon_element:",
+        "peekOfCode": "def get_data_leilao(url):\n    print(\"Get data\")\n    headers = {\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}\n    try:\n        response = requests.get(url, headers=headers)\n        soup = BeautifulSoup(response.text, 'html.parser')\n        # Encontrar o elemento <i> com a classe 'fa-gavel'\n        icon_element = soup.find('i', {'class': 'fa-gavel'})\n        # Verificar se o elemento foi encontrado",
         "detail": "main",
         "documentation": {}
     },
@@ -119,7 +154,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def format_data_frame(df, novos_imoveis = False):\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = pd.to_numeric(\n        df[\"Preço\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),\n        errors=\"coerce\",\n    )\n    df[\"Valor de avaliação\"] = pd.to_numeric(\n        df[\"Valor de avaliação\"].astype(str).str.replace(\".\", \"\").str.replace(\",\", \".\"),\n        errors=\"coerce\",",
+        "peekOfCode": "def format_data_frame(df, novos_imoveis = False):\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    print(f\"Preço antes: {df['Preço']}\")\n    df[\"Preço\"] = df[\"Preço\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Valor de avaliação\"] = df[\"Valor de avaliação\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    print(f\"Preço depois: {df['Preço']}\")\n    df[\"Desconto\"] = pd.to_numeric(\n        df[\"Desconto\"].astype(str).str.replace(\",\", \".\"), errors=\"coerce\"\n    )",
         "detail": "main",
         "documentation": {}
     },
@@ -137,7 +172,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df = format_data_frame(df)\n    novos_imoveis = verificar_novos_imoveis(df)\n    if not novos_imoveis.empty:\n        # Enviar alerta por e-mail\n        alert_subject = 'Novos Imóveis Adicionados!'",
+        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df = format_data_frame(df)\n    novos_imoveis = verificar_novos_imoveis(df)\n    print(\"\\n\\nNOVOS: \")\n    print(novos_imoveis)\n    if not novos_imoveis.empty:",
         "detail": "main",
         "documentation": {}
     },

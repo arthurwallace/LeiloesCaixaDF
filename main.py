@@ -5,6 +5,10 @@ from trycourier import Courier
 import requests
 from bs4 import BeautifulSoup
 import re
+import aiohttp
+import asyncio
+from aiohttp import ClientSession
+import nest_asyncio
 
 ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'
 
@@ -29,12 +33,12 @@ def verificar_novos_imoveis(df_atual):
     try:
         # Tentar carregar o arquivo de dados recentes
         df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)
-        df_anterior = format_data_frame(df_anterior)
-    
-    except FileNotFoundError:
+        
+    except (FileNotFoundError, pd.errors.EmptyDataError):
         df_anterior = pd.DataFrame()
 
     if not df_anterior.empty:
+        df_anterior = format_data_frame(df_anterior)
         # Identificar novos imóveis
         novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
         novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
@@ -46,11 +50,13 @@ def verificar_novos_imoveis(df_atual):
 
         return novos_imoveis
 
+    df_atual = format_data_frame(df_atual, novos_imoveis=True)
     df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
     return pd.DataFrame()
 
 def get_data_leilao(url):
+    print("Get data")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
@@ -72,6 +78,7 @@ def get_data_leilao(url):
             if match:
                 data_leilao = match.group(1)
                 horario_leilao = match.group(2)
+                print(data_leilao, horario_leilao)
                 return data_leilao, horario_leilao
             else:
                 print("Padrão de data não encontrado.")
@@ -150,14 +157,13 @@ def formatar_novos_imoveis(df_novos):
 def format_data_frame(df, novos_imoveis = False):
     df.columns = [col.strip() for col in df.columns]
     df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
-    df["Preço"] = pd.to_numeric(
-        df["Preço"].astype(str).str.replace(".", "").str.replace(",", "."),
-        errors="coerce",
-    )
-    df["Valor de avaliação"] = pd.to_numeric(
-        df["Valor de avaliação"].astype(str).str.replace(".", "").str.replace(",", "."),
-        errors="coerce",
-    )
+    
+    print(f"Preço antes: {df['Preço']}")
+    
+    df["Preço"] = df["Preço"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
+    df["Valor de avaliação"] = df["Valor de avaliação"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
+    print(f"Preço depois: {df['Preço']}")
+    
     df["Desconto"] = pd.to_numeric(
         df["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
     )
@@ -165,11 +171,16 @@ def format_data_frame(df, novos_imoveis = False):
     
     if novos_imoveis == True:
         with st.spinner('Buscando dados dos novos imóveis...'):
+            my_bar = st.progress(0, text="Buscando dados dos novos imóveis...")
             for index, row in df.iterrows():
                 data_leilao, horario_leilao = get_data_leilao(row['Link de acesso'])
                 if data_leilao and horario_leilao:
                     df.at[index, 'Data do Leilão'] = data_leilao
                     df.at[index, 'Horário do Leilão'] = horario_leilao
+                    
+                my_bar.progress((index + 1)/len(df), text=f"Buscando dados dos novos imóveis... {index+1}/{len(df)}")
+            
+            my_bar.empty()
 
     return df
 
@@ -235,6 +246,14 @@ def get_sidebar_filters(df):
     return df_filtrado
 
 
+async def fetch_data_leilao(session, url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    async with session.get(url, headers=headers) as response:
+        return await response.text()
+
+
 
 def main():
     st.title("Visualizador de Imóveis da Caixa")
@@ -249,6 +268,8 @@ def main():
 
 
     novos_imoveis = verificar_novos_imoveis(df)
+    print("\n\nNOVOS: ")
+    print(novos_imoveis)
 
     if not novos_imoveis.empty:
         # Enviar alerta por e-mail
@@ -284,4 +305,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    nest_asyncio.apply()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
