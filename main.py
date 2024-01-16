@@ -52,7 +52,6 @@ def verificar_novos_imoveis(df_atual):
     return pd.DataFrame()
 
 def get_data_leilao(url):
-    print("Get data")
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
@@ -154,12 +153,10 @@ def format_data_frame(df, novos_imoveis = False):
     df.columns = [col.strip() for col in df.columns]
     df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
     
-    print(f"Preço antes: {df['Preço']}")
     
     df["Preço"] = df["Preço"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
     df["Valor de avaliação"] = df["Valor de avaliação"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
-    print(f"Preço depois: {df['Preço']}")
-    
+
     df["Desconto"] = pd.to_numeric(
         df["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
     )
@@ -264,8 +261,6 @@ def main():
 
 
     novos_imoveis = verificar_novos_imoveis(df)
-    print("\n\nNOVOS: ")
-    print(novos_imoveis)
 
     if not novos_imoveis.empty:
         # Enviar alerta por e-mail

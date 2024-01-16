@@ -92,7 +92,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def get_data_leilao(url):\n    print(\"Get data\")\n    headers = {\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}\n    try:\n        response = requests.get(url, headers=headers)\n        soup = BeautifulSoup(response.text, 'html.parser')\n        # Encontrar o elemento <i> com a classe 'fa-gavel'\n        icon_element = soup.find('i', {'class': 'fa-gavel'})\n        # Verificar se o elemento foi encontrado",
+        "peekOfCode": "def get_data_leilao(url):\n    headers = {\n        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}\n    try:\n        response = requests.get(url, headers=headers)\n        soup = BeautifulSoup(response.text, 'html.parser')\n        # Encontrar o elemento <i> com a classe 'fa-gavel'\n        icon_element = soup.find('i', {'class': 'fa-gavel'})\n        # Verificar se o elemento foi encontrado\n        if icon_element:",
         "detail": "main",
         "documentation": {}
     },
@@ -119,7 +119,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def format_data_frame(df, novos_imoveis = False):\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    print(f\"Preço antes: {df['Preço']}\")\n    df[\"Preço\"] = df[\"Preço\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Valor de avaliação\"] = df[\"Valor de avaliação\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    print(f\"Preço depois: {df['Preço']}\")\n    df[\"Desconto\"] = pd.to_numeric(\n        df[\"Desconto\"].astype(str).str.replace(\",\", \".\"), errors=\"coerce\"\n    )",
+        "peekOfCode": "def format_data_frame(df, novos_imoveis = False):\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = df[\"Preço\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Valor de avaliação\"] = df[\"Valor de avaliação\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Desconto\"] = pd.to_numeric(\n        df[\"Desconto\"].astype(str).str.replace(\",\", \".\"), errors=\"coerce\"\n    )\n    df[\"Tipo de Imóvel\"] = df[\"Descrição\"].apply(get_property_type)\n    if novos_imoveis == True:",
         "detail": "main",
         "documentation": {}
     },
@@ -137,7 +137,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df = format_data_frame(df)\n    novos_imoveis = verificar_novos_imoveis(df)\n    print(\"\\n\\nNOVOS: \")\n    print(novos_imoveis)\n    if not novos_imoveis.empty:",
+        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df = format_data_frame(df)\n    novos_imoveis = verificar_novos_imoveis(df)\n    if not novos_imoveis.empty:\n        # Enviar alerta por e-mail\n        alert_subject = 'Novos Imóveis Adicionados!'",
         "detail": "main",
         "documentation": {}
     },
