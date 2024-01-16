@@ -2,11 +2,13 @@ import streamlit as st
 import pandas as pd
 import locale
 from trycourier import Courier
+import requests
+from bs4 import BeautifulSoup
+import re
 
-ARQUIVO_DADOS_RECENTES = 'dados_recentes.csv'
+ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'
 
 def get_property_type(description):
-    # Extract the property type from the description
     return description.split(",")[0].strip()
 
 
@@ -19,67 +21,67 @@ def send_email(subject, body):
         message={
             "to": {"email": "arthur.wallace.silva@gmail.com"},
             "content": {"title": subject, "body": body}
-            # ,
-            # "data":{
-            # "info": "Por favor, resete sua senha o quanto antes em:  " + reset_url + ""
-            # }
         }
     )
     
-    # st.success("E-mail enviado com sucesso!")
-    
-    # print(response)
-    # # Verificar o status da resposta
-    # if response["status"] == "delivered":
-    #     st.success("E-mail enviado com sucesso!")
-    # else:
-    #     st.error(f"Falha ao enviar e-mail: {response['errors']}")
 
 def verificar_novos_imoveis(df_atual):
     try:
         # Tentar carregar o arquivo de dados recentes
         df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)
-        df_anterior["N° do imóvel"] = df_anterior["N° do imóvel"].astype(str).str.zfill(13)
-        df_anterior["Preço"] = pd.to_numeric(
-            df_anterior["Preço"].astype(str).str.replace(".", "").str.replace(",", "."),
-            errors="coerce",
-        )
-        df_anterior["Valor de avaliação"] = pd.to_numeric(
-            df_anterior["Valor de avaliação"].astype(str).str.replace(".", "").str.replace(",", "."),
-            errors="coerce",
-        )
-        df_anterior["Desconto"] = pd.to_numeric(
-            df_anterior["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
-        )
-
-        df_anterior["Tipo de Imóvel"] = df_anterior["Descrição"].apply(get_property_type)
+        df_anterior = format_data_frame(df_anterior)
     
     except FileNotFoundError:
-        # Se o arquivo não existir, assumir que não há dados anteriores
         df_anterior = pd.DataFrame()
 
-    # Verificar se o DataFrame anterior está vazio
     if not df_anterior.empty:
         # Identificar novos imóveis
         novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
-
-        # print(f"DF Atual - {len(df_atual)}:")
-        # print(df_atual[['N° do imóvel', 'Cidade', 'Modalidade de venda']].head())
-        # print(f"DF Anterior - {len(df_anterior)}:")
-        # print(df_anterior[['N° do imóvel', 'Cidade', 'Modalidade de venda']].head())
-        # print(f"Novos Imóveis - {len(novos_imoveis)}:")
-        # print(novos_imoveis[['N° do imóvel', 'Cidade', 'Modalidade de venda']].head())
-
-        # Atualizar o arquivo de dados recentes apenas se houver novos imóveis
+        novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
+        
+        df_atualizado = pd.concat([df_anterior, novos_imoveis])
+        
         if not novos_imoveis.empty:
-            df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
+            df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
         return novos_imoveis
 
-    # Salvar o DataFrame atual como o arquivo de dados recentes
     df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
     return pd.DataFrame()
+
+def get_data_leilao(url):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+
+        # Encontrar o elemento <i> com a classe 'fa-gavel'
+        icon_element = soup.find('i', {'class': 'fa-gavel'})
+
+        # Verificar se o elemento foi encontrado
+        if icon_element:
+            # Extrair o texto do elemento <span> pai
+            parent_span = icon_element.find_parent('span')
+            data_text = parent_span.get_text(strip=True)
+
+            # Usar expressão regular para extrair data e horário
+            match = re.search(r'(\d{2}/\d{2}/\d{4}) - (\d{2}h\d{2})', data_text)
+            if match:
+                data_leilao = match.group(1)
+                horario_leilao = match.group(2)
+                return data_leilao, horario_leilao
+            else:
+                print("Padrão de data não encontrado.")
+                return None, None  # Adicionado para tratar caso não encontre a data e horário
+        else:
+            print("Elemento não encontrado.")
+            return None, None  # Adicionado para tratar caso não encontre o elemento
+    except Exception as e:
+        print(f"Erro ao obter data do leilão: {e}")
+        return None, None  
 
 
 def imprimir_imoveis(df):
@@ -96,10 +98,14 @@ def imprimir_imoveis(df):
         endereco = row["Endereço"]
         link_acesso = row["Link de acesso"]
         matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
+        data = row['Data do Leilão'] if pd.notna(row['Data do Leilão']) else ""
+        data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if pd.notna(row["Data do Leilão"]) else ""
+        horario = row['Horário do Leilão'] if pd.notna(row['Horário do Leilão']) else ""
 
+        
         st.image(imagem_url, width=200)
         with st.expander(
-            f"{modalidade_venda}\n\n{cidade_bairro_uf}\n\n{descricao}\n\n**Preço:** {preco} // **Avaliação:** {avaliacao} // **Desconto:** {desconto}%"
+            f"{modalidade_venda}\n\n**Data:** {data_formatada} - {horario}\n\n{cidade_bairro_uf}\n\n{descricao}\n\n**Preço:** {preco} // **Avaliação:** {avaliacao} // **Desconto:** {desconto}%"
         ):
             st.divider()
             st.write(f"**Modalidade de Venda:** {modalidade_venda}")
@@ -109,6 +115,10 @@ def imprimir_imoveis(df):
             st.write(f"**Endereço:** {endereco}")
             st.write(f"**Descrição:** {descricao}")
             st.write(f"**Link:** {link_acesso}")
+            # Exibir a data do leilão
+            # if data_leilao:
+            #     st.write(f"**Data do Leilão:** {data_leilao}")
+
 
             st.divider()
             st.write(f"Matrícula: ", matricula)
@@ -117,8 +127,8 @@ def imprimir_imoveis(df):
     
     return
 
+
 def formatar_novos_imoveis(df_novos):
-    # Crie uma string formatada com os detalhes dos novos imóveis
     formatted_string = ""
     for index, row in df_novos.iterrows():
         formatted_string += (
@@ -137,16 +147,8 @@ def formatar_novos_imoveis(df_novos):
         )
     return formatted_string
 
-
-def main():
-    st.title("Visualizador de Imóveis da Caixa")
-    
-
-    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
-    url_csv = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv"
-    df = pd.read_csv(url_csv, encoding="latin1", sep=";", skiprows=[0, 1])
+def format_data_frame(df, novos_imoveis = False):
     df.columns = [col.strip() for col in df.columns]
-
     df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
     df["Preço"] = pd.to_numeric(
         df["Preço"].astype(str).str.replace(".", "").str.replace(",", "."),
@@ -159,27 +161,20 @@ def main():
     df["Desconto"] = pd.to_numeric(
         df["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
     )
-
     df["Tipo de Imóvel"] = df["Descrição"].apply(get_property_type)
+    
+    if novos_imoveis == True:
+        with st.spinner('Buscando dados dos novos imóveis...'):
+            for index, row in df.iterrows():
+                data_leilao, horario_leilao = get_data_leilao(row['Link de acesso'])
+                if data_leilao and horario_leilao:
+                    df.at[index, 'Data do Leilão'] = data_leilao
+                    df.at[index, 'Horário do Leilão'] = horario_leilao
+
+    return df
 
 
-    novos_imoveis = verificar_novos_imoveis(df)
-    # print(novos_imoveis)
-    if not novos_imoveis.empty:
-        # Enviar alerta por e-mail
-        alert_subject = 'Novos Imóveis Adicionados!'
-        alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'
-        # Adicione a string formatada ao corpo do e-mail
-        alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
-        alert_body += formatar_novos_imoveis(novos_imoveis)
-        alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
-        send_email(alert_subject, alert_body)
-        print(alert_body)
-        st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
-        imprimir_imoveis(novos_imoveis)
-        st.divider()
-        
-    # Adicionando filtros ao menu lateral
+def get_sidebar_filters(df):
     cidades_disponiveis = ["Todos"] + df["Cidade"].unique().tolist()
     cidade_filtro = st.sidebar.selectbox("Selecione a Cidade", cidades_disponiveis)
 
@@ -199,6 +194,8 @@ def main():
         "Menor Desconto",
         "Maior Avaliação",
         "Menor Avaliação",
+        "Data mais recente",
+        "Data mais antiga"
     ]
     ordenacao = st.sidebar.selectbox("Ordenar por", opcoes_ordenacao)
 
@@ -229,10 +226,57 @@ def main():
         df_filtrado = df_filtrado.sort_values(by="Valor de avaliação", ascending=False)
     elif ordenacao == "Menor Avaliação":
         df_filtrado = df_filtrado.sort_values(by="Valor de avaliação", ascending=True)
+    elif ordenacao == "Data mais recente":
+        df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=True)
+    elif ordenacao == "Data mais antiga":
+        df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=False)
+
+
+    return df_filtrado
+
+
+
+def main():
+    st.title("Visualizador de Imóveis da Caixa")
+    
+
+    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
+    url_csv = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv"
+    df = pd.read_csv(url_csv, encoding="latin1", sep=";", skiprows=[0, 1])
+    
+    df = format_data_frame(df)
+    
+
+
+    novos_imoveis = verificar_novos_imoveis(df)
+
+    if not novos_imoveis.empty:
+        # Enviar alerta por e-mail
+        alert_subject = 'Novos Imóveis Adicionados!'
+        alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'
+        alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
+        alert_body += formatar_novos_imoveis(novos_imoveis)
+        alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
+        send_email(alert_subject, alert_body)
+
+        st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
+        imprimir_imoveis(novos_imoveis)
+        st.divider()
+    
+    
+    df_novo = pd.read_csv(ARQUIVO_DADOS_RECENTES)
+    df_novo = format_data_frame(df_novo)
+    
+    df_novo["Data do Leilão"] = pd.to_datetime(df_novo["Data do Leilão"], format="%d/%m/%Y", errors="coerce")
+
+    # Adicionando filtros ao menu lateral
+    df_filtrado = get_sidebar_filters(df_novo)
 
     st.info(f"Total de Imóveis: {len(df_filtrado)}")
 
     locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+    
+    
     imprimir_imoveis(df_filtrado)
 
     st.divider()
