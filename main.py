@@ -5,10 +5,6 @@ from trycourier import Courier
 import requests
 from bs4 import BeautifulSoup
 import re
-import aiohttp
-import asyncio
-from aiohttp import ClientSession
-import nest_asyncio
 
 ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'
 
@@ -305,6 +301,4 @@ def main():
 
 
 if __name__ == "__main__":
-    nest_asyncio.apply()
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    main()

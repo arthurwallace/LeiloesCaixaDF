@@ -61,41 +61,6 @@
         "documentation": {}
     },
     {
-        "label": "aiohttp",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "aiohttp",
-        "description": "aiohttp",
-        "detail": "aiohttp",
-        "documentation": {}
-    },
-    {
-        "label": "ClientSession",
-        "importPath": "aiohttp",
-        "description": "aiohttp",
-        "isExtraImport": true,
-        "detail": "aiohttp",
-        "documentation": {}
-    },
-    {
-        "label": "asyncio",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "asyncio",
-        "description": "asyncio",
-        "detail": "asyncio",
-        "documentation": {}
-    },
-    {
-        "label": "nest_asyncio",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "nest_asyncio",
-        "description": "nest_asyncio",
-        "detail": "nest_asyncio",
-        "documentation": {}
-    },
-    {
         "label": "get_property_type",
         "kind": 2,
         "importPath": "main",
