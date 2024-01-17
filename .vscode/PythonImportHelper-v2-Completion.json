@@ -74,16 +74,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}\n        }\n    )\ndef verificar_novos_imoveis(df_atual):",
-        "detail": "main",
-        "documentation": {}
-    },
-    {
-        "label": "verificar_novos_imoveis",
-        "kind": 2,
-        "importPath": "main",
-        "description": "main",
-        "peekOfCode": "def verificar_novos_imoveis(df_atual):\n    try:\n        # Tentar carregar o arquivo de dados recentes\n        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)\n    except (FileNotFoundError, pd.errors.EmptyDataError):\n        df_anterior = pd.DataFrame()\n    if not df_anterior.empty:\n        df_anterior = format_data_frame(df_anterior)\n        # Identificar novos imóveis\n        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]",
+        "peekOfCode": "def send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}\n        }\n    )\ndef get_data_leilao(url):",
         "detail": "main",
         "documentation": {}
     },
@@ -97,11 +88,11 @@
         "documentation": {}
     },
     {
-        "label": "imprimir_imoveis",
+        "label": "verificar_novos_imoveis",
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def imprimir_imoveis(df):\n    for index, row in df.iterrows():\n        imagem_url = (\n            f\"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg\"\n        )\n        modalidade_venda = row[\"Modalidade de venda\"]\n        cidade_bairro_uf = f\"{row['Cidade']}, {row['Bairro']} - {row['UF']}\"\n        descricao = row[\"Descrição\"]\n        preco = locale.currency(row[\"Preço\"], grouping=True).replace(\"$\", \"\\$\")\n        avaliacao = locale.currency(row[\"Valor de avaliação\"], grouping=True)",
+        "peekOfCode": "def verificar_novos_imoveis(df_atual):\n    try:\n        # Tentar carregar o arquivo de dados recentes\n        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)\n    except (FileNotFoundError, pd.errors.EmptyDataError):\n        df_anterior = pd.DataFrame()\n    if not df_anterior.empty:\n        df_anterior = format_data_frame(df_anterior)\n        # Identificar novos imóveis\n        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]",
         "detail": "main",
         "documentation": {}
     },
@@ -133,11 +124,20 @@
         "documentation": {}
     },
     {
+        "label": "imprimir_imoveis",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def imprimir_imoveis(df):\n    for index, row in df.iterrows():\n        imagem_url = (\n            f\"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg\"\n        )\n        modalidade_venda = row[\"Modalidade de venda\"]\n        cidade_bairro_uf = f\"{row['Cidade']}, {row['Bairro']} - {row['UF']}\"\n        descricao = row[\"Descrição\"]\n        preco = locale.currency(row[\"Preço\"], grouping=True).replace(\"$\", \"\\$\")\n        avaliacao = locale.currency(row[\"Valor de avaliação\"], grouping=True)",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
         "label": "main",
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.title(\"Visualizador de Imóveis da Caixa\")\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"\n    df = pd.read_csv(url_csv, encoding=\"latin1\", sep=\";\", skiprows=[0, 1])\n    df = format_data_frame(df)\n    novos_imoveis = verificar_novos_imoveis(df)\n    if not novos_imoveis.empty:\n        # Enviar alerta por e-mail\n        alert_subject = 'Novos Imóveis Adicionados!'",
+        "peekOfCode": "def main():\n    st.set_page_config(\n        page_title=\"Leilões Caixa - DF\",\n        page_icon=\"🏠\"\n    )\n    st.title(\"Leilões de Imóveis Caixa - DF\")\n    with open('style.css') as f:\n        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"",
         "detail": "main",
         "documentation": {}
     },

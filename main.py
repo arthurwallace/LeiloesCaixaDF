@@ -11,7 +11,6 @@ ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'
 def get_property_type(description):
     return description.split(",")[0].strip()
 
-
 def send_email(subject, body):
     # Configurar Courier
 
@@ -23,33 +22,7 @@ def send_email(subject, body):
             "content": {"title": subject, "body": body}
         }
     )
-    
 
-def verificar_novos_imoveis(df_atual):
-    try:
-        # Tentar carregar o arquivo de dados recentes
-        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)
-        
-    except (FileNotFoundError, pd.errors.EmptyDataError):
-        df_anterior = pd.DataFrame()
-
-    if not df_anterior.empty:
-        df_anterior = format_data_frame(df_anterior)
-        # Identificar novos imóveis
-        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
-        novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
-        
-        df_atualizado = pd.concat([df_anterior, novos_imoveis])
-        
-        if not novos_imoveis.empty:
-            df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
-
-        return novos_imoveis
-
-    df_atual = format_data_frame(df_atual, novos_imoveis=True)
-    df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
-
-    return pd.DataFrame()
 
 def get_data_leilao(url):
     headers = {
@@ -86,49 +59,31 @@ def get_data_leilao(url):
         return None, None  
 
 
-def imprimir_imoveis(df):
-    for index, row in df.iterrows():
-        imagem_url = (
-            f"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg"
-        )
-        modalidade_venda = row["Modalidade de venda"]
-        cidade_bairro_uf = f"{row['Cidade']}, {row['Bairro']} - {row['UF']}"
-        descricao = row["Descrição"]
-        preco = locale.currency(row["Preço"], grouping=True).replace("$", "\$")
-        avaliacao = locale.currency(row["Valor de avaliação"], grouping=True)
-        desconto = row["Desconto"]
-        endereco = row["Endereço"]
-        link_acesso = row["Link de acesso"]
-        matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
-        data = row['Data do Leilão'] if pd.notna(row['Data do Leilão']) else ""
-        data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if pd.notna(row["Data do Leilão"]) else ""
-        horario = row['Horário do Leilão'] if pd.notna(row['Horário do Leilão']) else ""
-
+def verificar_novos_imoveis(df_atual):
+    try:
+        # Tentar carregar o arquivo de dados recentes
+        df_anterior = pd.read_csv(ARQUIVO_DADOS_RECENTES)
         
-        st.image(imagem_url, width=200)
-        with st.expander(
-            f"{modalidade_venda}\n\n**Data:** {data_formatada} - {horario}\n\n{cidade_bairro_uf}\n\n{descricao}\n\n**Preço:** {preco} // **Avaliação:** {avaliacao} // **Desconto:** {desconto}%"
-        ):
-            st.divider()
-            st.write(f"**Modalidade de Venda:** {modalidade_venda}")
-            st.write(f"**Preço Mínimo:** {preco}")
-            st.write(f"**Avaliação:** {avaliacao}")
-            st.write(f"**Desconto:** {desconto}%")
-            st.write(f"**Endereço:** {endereco}")
-            st.write(f"**Descrição:** {descricao}")
-            st.write(f"**Link:** {link_acesso}")
-            # Exibir a data do leilão
-            # if data_leilao:
-            #     st.write(f"**Data do Leilão:** {data_leilao}")
+    except (FileNotFoundError, pd.errors.EmptyDataError):
+        df_anterior = pd.DataFrame()
 
+    if not df_anterior.empty:
+        df_anterior = format_data_frame(df_anterior)
+        # Identificar novos imóveis
+        novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
+        novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
+        
+        df_atualizado = pd.concat([df_anterior, novos_imoveis])
+        
+        if not novos_imoveis.empty:
+            df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
-            st.divider()
-            st.write(f"Matrícula: ", matricula)
-            st.image(imagem_url, caption="Imagem do Imóvel")
-            
-    
-    return
+        return novos_imoveis
 
+    df_atual = format_data_frame(df_atual, novos_imoveis=True)
+    df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
+
+    return pd.DataFrame()
 
 def formatar_novos_imoveis(df_novos):
     formatted_string = ""
@@ -238,19 +193,68 @@ def get_sidebar_filters(df):
 
     return df_filtrado
 
+def imprimir_imoveis(df):
+    for index, row in df.iterrows():
+        imagem_url = (
+            f"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg"
+        )
+        modalidade_venda = row["Modalidade de venda"]
+        cidade_bairro_uf = f"{row['Cidade']}, {row['Bairro']} - {row['UF']}"
+        descricao = row["Descrição"]
+        preco = locale.currency(row["Preço"], grouping=True).replace("$", "\$")
+        avaliacao = locale.currency(row["Valor de avaliação"], grouping=True)
+        desconto = row["Desconto"]
+        endereco = row["Endereço"]
+        link_acesso = row["Link de acesso"]
+        matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
+        data = row['Data do Leilão'] if pd.notna(row['Data do Leilão']) else ""
+        data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if pd.notna(row["Data do Leilão"]) else ""
+        horario = row['Horário do Leilão'] if pd.notna(row['Horário do Leilão']) else ""
 
-async def fetch_data_leilao(session, url):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
-    }
-    async with session.get(url, headers=headers) as response:
-        return await response.text()
+        col1, col2 = st.columns([1.5, 3])
+
+        with col1:
+            st.image(imagem_url)
+
+        with col2:
+            with st.expander(
+                f"***{modalidade_venda}***\n\n**Data:** {data_formatada} - {horario}\n\n**Preço:** :green[**{preco}**]\n\n**Avaliação:** {avaliacao}\n\n**Desconto:** {desconto}%\n\n{cidade_bairro_uf}\n\nㅤ\n\n{descricao}"
+            ):
+                st.divider()
+                st.write(f"**Modalidade de Venda:** {modalidade_venda}")
+                st.write(f"**Preço Mínimo:** {preco}")
+                st.write(f"**Avaliação:** {avaliacao}")
+                st.write(f"**Desconto:** {desconto}%")
+                st.write(f"**Endereço:** {endereco}")
+                st.write(f"**Descrição:** {descricao}")
+                st.write(f"**Link:** {link_acesso}")
+                # Exibir a data do leilão
+                # if data_leilao:
+                #     st.write(f"**Data do Leilão:** {data_leilao}")
+
+
+                st.divider()
+                st.write(f"Matrícula: ", matricula)
+                st.image(imagem_url, caption="Imagem do Imóvel")
+            
+        st.divider()
+            
+    
+    return
 
 
 
 def main():
-    st.title("Visualizador de Imóveis da Caixa")
     
+    st.set_page_config(
+        page_title="Leilões Caixa - DF",
+        page_icon="🏠"
+    )
+    
+    st.title("Leilões de Imóveis Caixa - DF")
+    
+    with open('style.css') as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
     url_csv = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv"
