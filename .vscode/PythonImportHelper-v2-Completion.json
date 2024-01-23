@@ -110,7 +110,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def format_data_frame(df, novos_imoveis = False):\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = df[\"Preço\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Valor de avaliação\"] = df[\"Valor de avaliação\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Desconto\"] = pd.to_numeric(\n        df[\"Desconto\"].astype(str).str.replace(\",\", \".\"), errors=\"coerce\"\n    )\n    df[\"Tipo de Imóvel\"] = df[\"Descrição\"].apply(get_property_type)\n    if novos_imoveis == True:",
+        "peekOfCode": "def format_data_frame(df_original, novos_imoveis = False):\n    df = df_original.copy()\n    df.columns = [col.strip() for col in df.columns]\n    df[\"N° do imóvel\"] = df[\"N° do imóvel\"].astype(str).str.zfill(13)\n    df[\"Preço\"] = df[\"Preço\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Valor de avaliação\"] = df[\"Valor de avaliação\"].apply(lambda x: pd.to_numeric(x.replace(\".\", \"\").replace(\",\", \".\"), errors=\"coerce\") if isinstance(x, str) else x)\n    df[\"Desconto\"] = pd.to_numeric(\n        df[\"Desconto\"].astype(str).str.replace(\",\", \".\"), errors=\"coerce\"\n    )\n    df[\"Tipo de Imóvel\"] = df[\"Descrição\"].apply(get_property_type)",
         "detail": "main",
         "documentation": {}
     },
@@ -137,7 +137,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def main():\n    st.set_page_config(\n        page_title=\"Leilões Caixa - DF\",\n        page_icon=\"🏠\"\n    )\n    st.title(\"Leilões de Imóveis Caixa - DF\")\n    with open('style.css') as f:\n        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'\n    url_csv = \"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv\"",
+        "peekOfCode": "def main():\n    st.set_page_config(\n        page_title=\"Leilões Caixa - DF\",\n        page_icon=\"🏠\"\n    )\n    st.title(\"Leilões de Imóveis Caixa - DF\")\n    locale.setlocale(locale.LC_ALL, \"pt_BR.UTF-8\")\n    with open('style.css') as f:\n        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)\n    # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'",
         "detail": "main",
         "documentation": {}
     },

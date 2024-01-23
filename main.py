@@ -73,14 +73,25 @@ def verificar_novos_imoveis(df_atual):
         novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
         novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
         
+        imoveis_removidos = df_anterior[~df_anterior['N° do imóvel'].isin(df_atual['N° do imóvel'])]
+        # st.dataframe(imoveis_removidos)
+        
+        # print("\n\nREMOVIDOS\n\n")
+        # print(imoveis_removidos)
+        
         df_atualizado = pd.concat([df_anterior, novos_imoveis])
+        
+        df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
+        
+        # print(len(df_atualizado))
         
         if not novos_imoveis.empty:
             df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
+        df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         return novos_imoveis
 
-    df_atual = format_data_frame(df_atual, novos_imoveis=True)
+    df_atual = format_data_frame(df_atualizado, novos_imoveis=True)
     df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
     return pd.DataFrame()
@@ -104,7 +115,8 @@ def formatar_novos_imoveis(df_novos):
         )
     return formatted_string
 
-def format_data_frame(df, novos_imoveis = False):
+def format_data_frame(df_original, novos_imoveis = False):
+    df = df_original.copy()
     df.columns = [col.strip() for col in df.columns]
     df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
     
@@ -119,13 +131,15 @@ def format_data_frame(df, novos_imoveis = False):
     
     if novos_imoveis == True:
         with st.spinner('Buscando dados dos novos imóveis...'):
-            my_bar = st.progress(0, text="Buscando dados dos novos imóveis...")
+            my_bar = st.progress(0, text=f"Buscando dados dos novos imóveis... 0/{len(df)}")
+            df = df.reset_index(drop=True)
             for index, row in df.iterrows():
                 data_leilao, horario_leilao = get_data_leilao(row['Link de acesso'])
                 if data_leilao and horario_leilao:
                     df.at[index, 'Data do Leilão'] = data_leilao
                     df.at[index, 'Horário do Leilão'] = horario_leilao
                     
+                progress_value = 0
                 my_bar.progress((index + 1)/len(df), text=f"Buscando dados dos novos imóveis... {index+1}/{len(df)}")
             
             my_bar.empty()
@@ -156,7 +170,7 @@ def get_sidebar_filters(df):
         "Data mais recente",
         "Data mais antiga"
     ]
-    ordenacao = st.sidebar.selectbox("Ordenar por", opcoes_ordenacao)
+    ordenacao = st.sidebar.selectbox("Ordenar por", opcoes_ordenacao, 6)
 
     # Aplicando filtros ao DataFrame
     if cidade_filtro == "Todos":
@@ -207,9 +221,9 @@ def imprimir_imoveis(df):
         endereco = row["Endereço"]
         link_acesso = row["Link de acesso"]
         matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
-        data = row['Data do Leilão'] if pd.notna(row['Data do Leilão']) else ""
-        data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if pd.notna(row["Data do Leilão"]) else ""
-        horario = row['Horário do Leilão'] if pd.notna(row['Horário do Leilão']) else ""
+        data = row['Data do Leilão'] if 'Data do Leilão' in df.columns else ''
+        data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if "Data do Leilão" in df.columns and pd.notna(row["Data do Leilão"]) else ""
+        horario = row['Horário do Leilão'] if "Horário do Leilão" in df.columns and pd.notna(row['Horário do Leilão']) else ""
 
         col1, col2 = st.columns([1.5, 3])
 
@@ -253,6 +267,8 @@ def main():
     
     st.title("Leilões de Imóveis Caixa - DF")
     
+    locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+    
     with open('style.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
@@ -290,7 +306,6 @@ def main():
 
     st.info(f"Total de Imóveis: {len(df_filtrado)}")
 
-    locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
     
     
     imprimir_imoveis(df_filtrado)
