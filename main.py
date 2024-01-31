@@ -5,8 +5,10 @@ from trycourier import Courier
 import requests
 from bs4 import BeautifulSoup
 import re
+from datetime import datetime
 
-ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'
+UF = 'DF'
+ARQUIVO_DADOS_RECENTES = f"Dados_com_data_{UF}.csv"
 
 def get_property_type(description):
     return description.split(",")[0].strip()
@@ -91,7 +93,7 @@ def verificar_novos_imoveis(df_atual):
         df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         return novos_imoveis
 
-    df_atual = format_data_frame(df_atualizado, novos_imoveis=True)
+    df_atual = format_data_frame(df_atual, novos_imoveis=True)
     df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
     return pd.DataFrame()
@@ -220,7 +222,7 @@ def imprimir_imoveis(df):
         desconto = row["Desconto"]
         endereco = row["Endereço"]
         link_acesso = row["Link de acesso"]
-        matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/DF/{row['N° do imóvel']}.pdf"
+        matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/{UF}/{row['N° do imóvel']}.pdf"
         data = row['Data do Leilão'] if 'Data do Leilão' in df.columns else ''
         data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if "Data do Leilão" in df.columns and pd.notna(row["Data do Leilão"]) else ""
         horario = row['Horário do Leilão'] if "Horário do Leilão" in df.columns and pd.notna(row['Horário do Leilão']) else ""
@@ -273,9 +275,9 @@ def main():
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
-    url_csv = "https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_DF.csv"
-    df = pd.read_csv(url_csv, encoding="latin1", sep=";", skiprows=[0, 1])
-    
+    url_csv = f"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{UF}.csv"
+    df = pd.read_csv(url_csv, encoding="latin1", sep=";", skiprows=[0, 1], on_bad_lines = 'warn')
+    #st.dataframe(df)
     df = format_data_frame(df)
     
 
@@ -292,6 +294,7 @@ def main():
         send_email(alert_subject, alert_body)
 
         st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
+        novos_imoveis["Data do Leilão"] = pd.to_datetime(novos_imoveis["Data do Leilão"], format="%d/%m/%Y", errors="coerce")
         imprimir_imoveis(novos_imoveis)
         st.divider()
     

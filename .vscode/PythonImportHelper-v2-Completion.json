@@ -61,6 +61,14 @@
         "documentation": {}
     },
     {
+        "label": "datetime",
+        "importPath": "datetime",
+        "description": "datetime",
+        "isExtraImport": true,
+        "detail": "datetime",
+        "documentation": {}
+    },
+    {
         "label": "get_property_type",
         "kind": 2,
         "importPath": "main",
@@ -142,11 +150,20 @@
         "documentation": {}
     },
     {
+        "label": "UF",
+        "kind": 5,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "UF = 'DF'\nARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
         "label": "ARQUIVO_DADOS_RECENTES",
         "kind": 5,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "ARQUIVO_DADOS_RECENTES = 'Dados_com_data.csv'\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}",
+        "peekOfCode": "ARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}",
         "detail": "main",
         "documentation": {}
     }
