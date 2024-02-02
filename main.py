@@ -14,16 +14,20 @@ def get_property_type(description):
     return description.split(",")[0].strip()
 
 def send_email(subject, body):
-    # Configurar Courier
+    try:
+        # Configurar Courier
+        client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')
 
-    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')
+        response = client.send_message(
+            message={
+                "to": [{"email": "arthur.wallace.silva@gmail.com"}, {"email": "givanildo.caldas@gmail.com"}],
+                "content": {"title": subject, "body": body}
+            }
+        )
 
-    response = client.send_message(
-        message={
-            "to": {"email": "arthur.wallace.silva@gmail.com"},
-            "content": {"title": subject, "body": body}
-        }
-    )
+    except Exception as e:
+        # Imprimir o erro em caso de exceção
+        print(f"Erro ao enviar e-mail: {str(e)}")
 
 
 def get_data_leilao(url):
@@ -101,7 +105,9 @@ def verificar_novos_imoveis(df_atual):
 def formatar_novos_imoveis(df_novos):
     formatted_string = ""
     for index, row in df_novos.iterrows():
+        image_url = f"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg"
         formatted_string += (
+            #f'![Alt text]({image_url} "a title")'
             f"N° do Imóvel: {row['N° do imóvel']}\n"
             f"Cidade: {row['Cidade']}\n"
             f"Modalidade de Venda: {row['Modalidade de venda']}\n"
@@ -258,6 +264,14 @@ def imprimir_imoveis(df):
     
     return
 
+def format_email_novos_imoveis(novos_imoveis):
+    alert_subject = 'Leilão Caixa DF - Novos Imóveis Adicionados!'
+    alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'
+    alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
+    alert_body += formatar_novos_imoveis(novos_imoveis)
+    alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
+    send_email(alert_subject, alert_body)
+
 
 
 def main():
@@ -286,12 +300,7 @@ def main():
 
     if not novos_imoveis.empty:
         # Enviar alerta por e-mail
-        alert_subject = 'Novos Imóveis Adicionados!'
-        alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'
-        alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
-        alert_body += formatar_novos_imoveis(novos_imoveis)
-        alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
-        send_email(alert_subject, alert_body)
+        format_email_novos_imoveis(novos_imoveis)
 
         st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
         novos_imoveis["Data do Leilão"] = pd.to_datetime(novos_imoveis["Data do Leilão"], format="%d/%m/%Y", errors="coerce")

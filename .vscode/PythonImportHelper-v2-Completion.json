@@ -73,7 +73,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}\n        }",
+        "peekOfCode": "def get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    try:\n        # Configurar Courier\n        client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n        response = client.send_message(\n            message={\n                \"to\": [{\"email\": \"arthur.wallace.silva@gmail.com\"}, {\"email\": \"givanildo.caldas@gmail.com\"}],\n                \"content\": {\"title\": subject, \"body\": body}",
         "detail": "main",
         "documentation": {}
     },
@@ -82,7 +82,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}\n        }\n    )\ndef get_data_leilao(url):",
+        "peekOfCode": "def send_email(subject, body):\n    try:\n        # Configurar Courier\n        client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n        response = client.send_message(\n            message={\n                \"to\": [{\"email\": \"arthur.wallace.silva@gmail.com\"}, {\"email\": \"givanildo.caldas@gmail.com\"}],\n                \"content\": {\"title\": subject, \"body\": body}\n            }\n        )",
         "detail": "main",
         "documentation": {}
     },
@@ -109,7 +109,7 @@
         "kind": 2,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "def formatar_novos_imoveis(df_novos):\n    formatted_string = \"\"\n    for index, row in df_novos.iterrows():\n        formatted_string += (\n            f\"N° do Imóvel: {row['N° do imóvel']}\\n\"\n            f\"Cidade: {row['Cidade']}\\n\"\n            f\"Modalidade de Venda: {row['Modalidade de venda']}\\n\"\n            f\"Tipo de Imóvel: {row['Tipo de Imóvel']}\\n\"\n            f\"Descrição: {row['Descrição']}\\n\"\n            f\"Preço: {locale.currency(row['Preço'], grouping=True)}\\n\"",
+        "peekOfCode": "def formatar_novos_imoveis(df_novos):\n    formatted_string = \"\"\n    for index, row in df_novos.iterrows():\n        image_url = f\"https://venda-imoveis.caixa.gov.br/fotos/F{row['N° do imóvel']}21.jpg\"\n        formatted_string += (\n            #f'![Alt text]({image_url} \"a title\")'\n            f\"N° do Imóvel: {row['N° do imóvel']}\\n\"\n            f\"Cidade: {row['Cidade']}\\n\"\n            f\"Modalidade de Venda: {row['Modalidade de venda']}\\n\"\n            f\"Tipo de Imóvel: {row['Tipo de Imóvel']}\\n\"",
         "detail": "main",
         "documentation": {}
     },
@@ -141,6 +141,15 @@
         "documentation": {}
     },
     {
+        "label": "format_email_novos_imoveis",
+        "kind": 2,
+        "importPath": "main",
+        "description": "main",
+        "peekOfCode": "def format_email_novos_imoveis(novos_imoveis):\n    alert_subject = 'Leilão Caixa DF - Novos Imóveis Adicionados!'\n    alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'\n    alert_body += '\\n\\nDetalhes dos Novos Imóveis:\\n\\n'\n    alert_body += formatar_novos_imoveis(novos_imoveis)\n    alert_body += '\\n\\nConfira em: https://leiloescaixadf.streamlit.app/\\n\\n'\n    send_email(alert_subject, alert_body)\ndef main():\n    st.set_page_config(\n        page_title=\"Leilões Caixa - DF\",",
+        "detail": "main",
+        "documentation": {}
+    },
+    {
         "label": "main",
         "kind": 2,
         "importPath": "main",
@@ -154,7 +163,7 @@
         "kind": 5,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "UF = 'DF'\nARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},",
+        "peekOfCode": "UF = 'DF'\nARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    try:\n        # Configurar Courier\n        client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n        response = client.send_message(\n            message={",
         "detail": "main",
         "documentation": {}
     },
@@ -163,7 +172,7 @@
         "kind": 5,
         "importPath": "main",
         "description": "main",
-        "peekOfCode": "ARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    # Configurar Courier\n    client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n    response = client.send_message(\n        message={\n            \"to\": {\"email\": \"arthur.wallace.silva@gmail.com\"},\n            \"content\": {\"title\": subject, \"body\": body}",
+        "peekOfCode": "ARQUIVO_DADOS_RECENTES = f\"Dados_com_data_{UF}.csv\"\ndef get_property_type(description):\n    return description.split(\",\")[0].strip()\ndef send_email(subject, body):\n    try:\n        # Configurar Courier\n        client = Courier(auth_token='pk_prod_XNB7MJGSQX4EMBHXE0K17EZE8FCA')\n        response = client.send_message(\n            message={\n                \"to\": [{\"email\": \"arthur.wallace.silva@gmail.com\"}, {\"email\": \"givanildo.caldas@gmail.com\"}],",
         "detail": "main",
         "documentation": {}
     }
