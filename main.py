@@ -175,8 +175,8 @@ def get_sidebar_filters(df):
         "Menor Desconto",
         "Maior Avaliação",
         "Menor Avaliação",
-        "Data mais recente",
-        "Data mais antiga"
+        "Data mais próxima",
+        "Data mais longe"
     ]
     ordenacao = st.sidebar.selectbox("Ordenar por", opcoes_ordenacao, 6)
 
@@ -207,9 +207,9 @@ def get_sidebar_filters(df):
         df_filtrado = df_filtrado.sort_values(by="Valor de avaliação", ascending=False)
     elif ordenacao == "Menor Avaliação":
         df_filtrado = df_filtrado.sort_values(by="Valor de avaliação", ascending=True)
-    elif ordenacao == "Data mais recente":
+    elif ordenacao == "Data mais próxima":
         df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=True)
-    elif ordenacao == "Data mais antiga":
+    elif ordenacao == "Data mais longe":
         df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=False)
 
 
