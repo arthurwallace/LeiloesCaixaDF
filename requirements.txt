@@ -1,4 +1,4 @@
 streamlit
 pandas
-trycourier
+trycourier==5.0.0
 beautifulsoup4
