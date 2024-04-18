@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import locale
+import courier
 from courier.client import Courier
 import requests
 from bs4 import BeautifulSoup
