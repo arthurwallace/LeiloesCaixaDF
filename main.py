@@ -1,3 +1,4 @@
+import io
 import streamlit as st
 import pandas as pd
 import locale
@@ -33,12 +34,11 @@ def send_email(subject, body):
 
 def get_data_leilao(url):
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
-
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
     try:
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
-
         # Encontrar o elemento <i> com a classe 'fa-gavel'
         icon_element = soup.find('i', {'class': 'fa-gavel'})
 
@@ -80,23 +80,43 @@ def verificar_novos_imoveis(df_atual):
         novos_imoveis = df_atual[~df_atual['N° do imóvel'].isin(df_anterior['N° do imóvel'])]
         novos_imoveis = format_data_frame(novos_imoveis, novos_imoveis=True)
         
+        imoveis_com_alteracao = pd.DataFrame(columns=df_atual.columns)
+        for index, row in df_atual.iterrows():
+            n_imovel = row['N° do imóvel']
+            preco_atual = row['Preço']
+            modalidade_atual = row['Modalidade de venda']
+
+            # Verificar se o número do imóvel existe no DataFrame anterior
+            if n_imovel in df_anterior['N° do imóvel'].values:
+                # Obter o preço do imóvel no DataFrame anterior
+                preco_anterior = df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Preço'].iloc[0]
+                modalidade_anterior = df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Modalidade de venda'].iloc[0]
+
+                if preco_atual != preco_anterior or modalidade_atual != modalidade_anterior:
+                    # Adicionar o imóvel ao DataFrame de imóveis com alteração
+                    #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Preço'] = preco_atual
+                    #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Modalidade de venda'] = modalidade_atual
+                    imoveis_com_alteracao = pd.concat([imoveis_com_alteracao, row.to_frame().T], ignore_index=True)
+                    df_anterior = df_anterior.drop((df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel]).index)
+        
+        imoveis_com_alteracao = format_data_frame(imoveis_com_alteracao, novos_imoveis=True)  
         imoveis_removidos = df_anterior[~df_anterior['N° do imóvel'].isin(df_atual['N° do imóvel'])]
         # st.dataframe(imoveis_removidos)
         
         # print("\n\nREMOVIDOS\n\n")
         # print(imoveis_removidos)
         
-        df_atualizado = pd.concat([df_anterior, novos_imoveis])
-        
-        df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
-        
-        # print(len(df_atualizado))
-        
-        if not novos_imoveis.empty:
+        df_atualizado = pd.concat([df_anterior, novos_imoveis, imoveis_com_alteracao])
+
+        #df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
+        if not novos_imoveis.empty or imoveis_com_alteracao.empty:
             df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
 
         df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         return novos_imoveis
+        
+        # print(len(df_atualizado))
+        
 
     df_atual = format_data_frame(df_atual, novos_imoveis=True)
     df_atual.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
@@ -125,35 +145,43 @@ def formatar_novos_imoveis(df_novos):
     return formatted_string
 
 def format_data_frame(df_original, novos_imoveis = False):
-    df = df_original.copy()
-    df.columns = [col.strip() for col in df.columns]
-    df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
-    
-    
-    df["Preço"] = df["Preço"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
-    df["Valor de avaliação"] = df["Valor de avaliação"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
+    try:
+        df = df_original.copy()
+        df.columns = [col.strip() for col in df.columns]
+        #print(df)
+        df["N° do imóvel"] = df["N° do imóvel"].astype(str).str.zfill(13)
+        
+        
+        df["Preço"] = df["Preço"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
+        df["Valor de avaliação"] = df["Valor de avaliação"].apply(lambda x: pd.to_numeric(x.replace(".", "").replace(",", "."), errors="coerce") if isinstance(x, str) else x)
 
-    df["Desconto"] = pd.to_numeric(
-        df["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
-    )
-    df["Tipo de Imóvel"] = df["Descrição"].apply(get_property_type)
-    
-    if novos_imoveis == True:
-        with st.spinner('Buscando dados dos novos imóveis...'):
-            my_bar = st.progress(0, text=f"Buscando dados dos novos imóveis... 0/{len(df)}")
-            df = df.reset_index(drop=True)
-            for index, row in df.iterrows():
-                data_leilao, horario_leilao = get_data_leilao(row['Link de acesso'])
-                if data_leilao and horario_leilao:
-                    df.at[index, 'Data do Leilão'] = data_leilao
-                    df.at[index, 'Horário do Leilão'] = horario_leilao
-                    
-                progress_value = 0
-                my_bar.progress((index + 1)/len(df), text=f"Buscando dados dos novos imóveis... {index+1}/{len(df)}")
-            
-            my_bar.empty()
+        df["Desconto"] = pd.to_numeric(
+            df["Desconto"].astype(str).str.replace(",", "."), errors="coerce"
+        )
+        df["Tipo de Imóvel"] = df["Descrição"].apply(get_property_type)
+        
+        if novos_imoveis == True:
+            print("NOVOS")
+            with st.spinner('Buscando dados dos novos imóveis...'):
+                print("Spiner")
+                my_bar = st.progress(0, text=f"Buscando dados dos novos imóveis... 0/{len(df)}")
+                df = df.reset_index(drop=True)
+                for index, row in df.iterrows():
+                    data_leilao, horario_leilao = get_data_leilao(row['Link de acesso'])
+                    if data_leilao and horario_leilao:
+                        df.at[index, 'Data do Leilão'] = data_leilao
+                        df.at[index, 'Horário do Leilão'] = horario_leilao
+                        
+                    progress_value = 0
+                    my_bar.progress((index + 1)/len(df), text=f"Buscando dados dos novos imóveis... {index+1}/{len(df)}")
+                
+                my_bar.empty()
 
-    return df
+        return df
+    
+    except Exception as e:
+        st.error(f"Ocorreu um erro: {e}")
+        return None
 
 
 def get_sidebar_filters(df):
@@ -290,10 +318,25 @@ def main():
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
     # Lendo o arquivo CSV diretamente da URL com a codificação 'latin1'
-    url_csv = f"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{UF}.csv"
-    df = pd.read_csv(url_csv, encoding="latin1", sep=";", skiprows=[0, 1], on_bad_lines = 'warn')
-    #st.dataframe(df)
-    df = format_data_frame(df)
+    url_csv = f"https://venda-imoveis.caixa.gov.br/listaweb/Lista_imoveis_{UF}.csv?245598167"
+    # Defina os headers para simular um navegador
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+
+    # Faça a solicitação GET com os headers
+    response = requests.get(url_csv, headers=headers)
+
+    # Verifique se a solicitação foi bem-sucedida
+    if response.status_code == 200:
+        # Carregue os dados CSV
+        content = response.content.decode("latin1")
+        df = pd.read_csv(io.StringIO(content), encoding="latin1", sep=";", skiprows=[0, 1])
+        # st.dataframe(df)
+        #print(df)
+        df = format_data_frame(df)
+    else:
+        print("Falha ao obter o arquivo CSV")
     
 
 
@@ -317,7 +360,7 @@ def main():
     # Adicionando filtros ao menu lateral
     df_filtrado = get_sidebar_filters(df_novo)
 
-    st.info(f"Total de Imóveis: {len(df_filtrado)}")
+    st.write(f"Total de Imóveis: {len(df_filtrado)}")
 
     
     
