@@ -41,25 +41,47 @@ def get_data_leilao(url):
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Encontrar o elemento <i> com a classe 'fa-gavel'
-        icon_element = soup.find('i', {'class': 'fa-gavel'})
-
+        icone_datas = soup.find_all('i', {'class': 'fa-gavel'})
+        
+        texto_valores = soup.find('div', class_='content').get_text(strip=True)
+        
         # Verificar se o elemento foi encontrado
-        if icon_element:
+        data_segundo_leilao = None
+        horario_segundo_leilao = None
+        valor_segundo_leilao = None
+        if icone_datas:
+            for dateTxt in icone_datas:
             # Extrair o texto do elemento <span> pai
-            parent_span = icon_element.find_parent('span')
-            data_text = parent_span.get_text(strip=True)
+                parent_span = dateTxt.find_parent('span')
+                data_text = parent_span.get_text(strip=True)
+                print(data_text, "\n")
 
-            # Usar expressão regular para extrair data e horário
-            match = re.search(r'(\d{2}/\d{2}/\d{4}) - (\d{2}h\d{2})', data_text)
-            if match:
-                data_leilao = match.group(1)
-                horario_leilao = match.group(2)
-            else:
-                print("Padrão de data não encontrado.")
-                data_leilao, horario_leilao = None, None
+                # Usar expressão regular para extrair data e horário
+                match_data_horario = re.search(r'(\d{2}/\d{2}/\d{4}) - (\d{2}h\d{2})', data_text)
+                if match_data_horario:
+                    if '2º Leilão' in data_text:
+                        print("2º Leilão---")
+                        data_segundo_leilao = match_data_horario.group(1)
+                        horario_segundo_leilao = match_data_horario.group(2)
+                    else:
+                        data_leilao = match_data_horario.group(1)
+                        horario_leilao = match_data_horario.group(2)
+                else:
+                    print("Padrão de data não encontrado.")
+                    data_leilao, horario_leilao = None, None
+                
+                
+            match_valor_segundo_leilao = re.search(r'Valor mínimo de venda 2º Leilão: R\$\s*([\d,.]+)', texto_valores)
+            if match_valor_segundo_leilao:
+                valor_segundo_leilao_text = match_valor_segundo_leilao.group(1)
+                valor_segundo_leilao = float(valor_segundo_leilao_text.replace('.', '').replace(',', '.'))
+                print(valor_segundo_leilao)
         else:
             print("Elemento não encontrado.")
             data_leilao, horario_leilao = None, None
+            
+        print("1º Leilão: ", data_leilao, horario_leilao)
+        print("2º Leilão: ", data_segundo_leilao, horario_segundo_leilao, valor_segundo_leilao)
         
         # Inicializar variáveis booleanas
         aceita_fgts = True
@@ -70,12 +92,12 @@ def get_data_leilao(url):
         acoes_judiciais = ''
 
         # Buscar todos os elementos <i> com a classe 'fa-info-circle'
-        info_elements = soup.find('i', {'class': 'fa-info-circle'})
-        parent_p = info_elements.find_parent('p')
+        icones_pagamentos = soup.find('i', {'class': 'fa-info-circle'})
+        text_pagamentos = icones_pagamentos.find_parent('p')
         
-        if parent_p:
+        if text_pagamentos:
             # Quebrar o texto do <p> em segmentos usando <br>
-            segments = parent_p.decode_contents().split('<br>')
+            segments = text_pagamentos.decode_contents().split('<br>')
             for segment in segments:
                 segment_text = BeautifulSoup(segment, 'html.parser').get_text().strip().lower()
                 
@@ -91,11 +113,11 @@ def get_data_leilao(url):
                     tem_acao_judicial = True
                     acoes_judiciais = segment_text
         
-        print(data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais)
-        return data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais
+        print(data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais, data_segundo_leilao, horario_segundo_leilao, valor_segundo_leilao)
+        return data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais, data_segundo_leilao, horario_segundo_leilao, valor_segundo_leilao
     except Exception as e:
         print(f"Erro ao obter data do leilão: {e}, URL: {url}")
-        return None, None, False, False, False, False, False, ''
+        return None, None, False, False, False, False, False, '', None, None, None
 
 
 def verificar_novos_imoveis(df_atual):
@@ -143,14 +165,16 @@ def verificar_novos_imoveis(df_atual):
     # print("\n\nREMOVIDOS\n\n")
     # print(imoveis_removidos)
     
-    df_atualizado = pd.concat([df_anterior, novos_imoveis, imoveis_com_alteracao])
 
     print(novos_imoveis)
     #df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
-    if (novos_imoveis is not None and not novos_imoveis.empty) or (imoveis_com_alteracao is not None and imoveis_com_alteracao.empty):
+    if not novos_imoveis.empty or not imoveis_com_alteracao.empty:
+        print("Caiu aqui")
+        df_atualizado = pd.concat([df_anterior, novos_imoveis, imoveis_com_alteracao])
         df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         return novos_imoveis
     
+    df_atualizado = df_anterior
     df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         
         
@@ -200,13 +224,12 @@ def format_data_frame(df_original, novos_imoveis = False):
         df["Tipo de Imóvel"] = df["Descrição"].apply(get_property_type)
         
         if novos_imoveis == True:
-            print("NOVOS")
             with st.spinner('Buscando dados dos novos imóveis...'):
-                print("Spiner")
+
                 my_bar = st.progress(0, text=f"Buscando dados dos novos imóveis... 0/{len(df)}")
                 df = df.reset_index(drop=True)
                 for index, row in df.iterrows():
-                    data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais = get_data_leilao(row['Link de acesso'])
+                    data_leilao, horario_leilao, aceita_fgts, aceita_financiamento, aceita_parcelamento, aceita_consorcio, tem_acao_judicial, acoes_judiciais, data_segundo_leilao, horario_segundo_leilao, valor_segundo_leilao = get_data_leilao(row['Link de acesso'])
                     
                     df.at[index, 'Data do Leilão'] = data_leilao
                     df.at[index, 'Horário do Leilão'] = horario_leilao
@@ -216,6 +239,9 @@ def format_data_frame(df_original, novos_imoveis = False):
                     df.at[index, 'Aceita Consorcio'] = aceita_consorcio
                     df.at[index, 'Tem Ação'] = tem_acao_judicial
                     df.at[index, 'Ações Judiciais'] = acoes_judiciais
+                    df.at[index, 'Data Segundo Leilão'] = data_segundo_leilao
+                    df.at[index, 'Horário Segundo Leilão'] = horario_segundo_leilao
+                    df.at[index, 'Preço Segundo Leilão'] = valor_segundo_leilao
                         
                         
                     progress_value = 0
@@ -308,13 +334,12 @@ def imprimir_imoveis(df):
         modalidade_venda = row["Modalidade de venda"]
         cidade_bairro_uf = f"{row['Cidade']}, {row['Bairro']} - {row['UF']}"
         descricao = row["Descrição"]
-        preco = locale.currency(row["Preço"], grouping=True).replace("$", "\$")
+        preco = locale.currency(row["Preço"], grouping=True).replace("$", "\\$")
         avaliacao = locale.currency(row["Valor de avaliação"], grouping=True)
         desconto = row["Desconto"]
         endereco = row["Endereço"]
         link_acesso = row["Link de acesso"]
         matricula = f"https://venda-imoveis.caixa.gov.br/editais/matricula/{UF}/{row['N° do imóvel']}.pdf"
-        data = row['Data do Leilão'] if 'Data do Leilão' in df.columns else ''
         data_formatada = row["Data do Leilão"].strftime("%d/%m/%Y") if "Data do Leilão" in df.columns and pd.notna(row["Data do Leilão"]) else ""
         horario = row['Horário do Leilão'] if "Horário do Leilão" in df.columns and pd.notna(row['Horário do Leilão']) else ""
         aceita_financiamento = f":green[**Sim**]" if row['Aceita Financiamento'] is True else f":red[**Não**]"
@@ -323,6 +348,13 @@ def imprimir_imoveis(df):
         aceita_consorcio = f":green[**Sim**]" if row['Aceita Consorcio'] is True else f":red[**Não**]"
         tem_acao = f":green[**Sim**]" if row['Tem Ação'] is True else f":red[**Não**]"
         lista_acoes = row['Ações Judiciais']
+        
+        data_formatada_segundo_leilao = pd.to_datetime(row["Data Segundo Leilão"], dayfirst=True).strftime("%d/%m/%Y") if "Data Segundo Leilão" in df.columns and pd.notna(row["Data Segundo Leilão"]) else ""
+        horario_segundo_leilao = row['Horário Segundo Leilão'] if "Horário Segundo Leilão" in df.columns and pd.notna(row['Horário Segundo Leilão']) else ""
+        preco_segundo_leilao = locale.currency(row["Preço Segundo Leilão"], grouping=True).replace("$", "\\$")
+        desconto_segundo_leilao = (row["Valor de avaliação"] - row["Preço Segundo Leilão"])/row["Valor de avaliação"]*100
+        
+        segundo_leilao_txt = f"‎\n\n:blue[**2º Leilão:**] **Data:** {data_formatada_segundo_leilao} - {horario_segundo_leilao} // **Preço:** :blue[**{preco_segundo_leilao}**]\n\n**Desconto 2º Leilão:** :blue[{round(desconto_segundo_leilao, 2)}%]\n\n‎\n\n" if pd.notna(row['Data Segundo Leilão']) else ''
         col1, col2 = st.columns([1.5, 3])
 
         with col1:
@@ -330,7 +362,7 @@ def imprimir_imoveis(df):
 
         with col2:
             with st.expander(
-                f"***{modalidade_venda}***\n\n**Data:** {data_formatada} - {horario}\n\n**Preço:** :green[**{preco}**] // **Avaliação:** {avaliacao}\n\n**Desconto:** {desconto}%\n\n{cidade_bairro_uf}\n\n**Financiamento:** {aceita_financiamento}\n\n**Ação Judicial:** {tem_acao}\n\n\n\n{descricao}"
+                f"***{modalidade_venda}***\n\n**Data:** {data_formatada} - {horario}\n\n**Preço:** :green[**{preco}**] // **Avaliação:** {avaliacao} \n\n**Desconto:** {desconto}%\n\n{segundo_leilao_txt}\n\n{cidade_bairro_uf}\n\n**Financiamento:** {aceita_financiamento}\n\n**Ação Judicial:** {tem_acao}\n\n\n\n{descricao}"
             ):
                 st.divider()
                 st.write(f"**Modalidade de Venda:** {modalidade_venda}")
@@ -364,7 +396,7 @@ def imprimir_imoveis(df):
 
 def format_email_novos_imoveis(novos_imoveis):
     alert_subject = 'Leilão Caixa DF - Novos Imóveis Adicionados!'
-    alert_body = 'Foram adicionados novos imóveis. Verifique a lista para mais detalhes.'
+    alert_body = f'Foram adicionados {len(novos_imoveis)} novos imóveis. Verifique a lista para mais detalhes.'
     alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
     alert_body += formatar_novos_imoveis(novos_imoveis)
     alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
