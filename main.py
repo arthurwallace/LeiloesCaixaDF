@@ -284,6 +284,11 @@ def get_sidebar_filters(df):
     financimento_filtro = st.sidebar.selectbox("Aceita Financiamento", ["Todos", "Sim", "Não"])
     
     acao_filtro = st.sidebar.selectbox("Possui Ação Judicial", ["Todos", "Sim", "Não"])
+    
+    with st.sidebar.expander('Links Úteis'):
+                st.write("Consulta Processos TJDFT (8.07)\nhttps://pje-consultapublica.tjdft.jus.br/consultapublica/ConsultaPublica/listView.seam")
+                st.write("Consulta Processos TRF (4.01)\nhttps://pje1g.trf1.jus.br/consultapublica/ConsultaPublica/listView.seam")
+                st.write("Consulta IPTU\nhttps://ww1.receita.fazenda.df.gov.br/emissao-segunda-via/iptu")
 
     # Aplicando filtros ao DataFrame
     if cidade_filtro == "Todos":
