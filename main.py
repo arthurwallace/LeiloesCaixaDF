@@ -431,31 +431,35 @@ def main():
     }
 
     # Faça a solicitação GET com os headers
-    response = requests.get(url_csv, headers=headers)
+    try:
+        response = requests.get(url_csv, headers=headers)
 
-    # Verifique se a solicitação foi bem-sucedida
-    if response.status_code == 200:
-        # Carregue os dados CSV
-        content = response.content.decode("latin1")
-        df = pd.read_csv(io.StringIO(content), encoding="latin1", sep=";", skiprows=[0, 1])
-        # st.dataframe(df)
-        #print(df)
-        df = format_data_frame(df)
-    else:
-        print("Falha ao obter o arquivo CSV")
+        # Verifique se a solicitação foi bem-sucedida
+        if response.status_code == 200:
+            # Carregue os dados CSV
+            content = response.content.decode("latin1")
+            df = pd.read_csv(io.StringIO(content), encoding="latin1", sep=";", skiprows=[0, 1])
+            # st.dataframe(df)
+            #print(df)
+            df = format_data_frame(df)
+        else:
+            print("Falha ao obter o arquivo CSV")
+        
+
+
+        novos_imoveis = verificar_novos_imoveis(df)
+
+        if not novos_imoveis.empty:
+            # Enviar alerta por e-mail
+            format_email_novos_imoveis(novos_imoveis)
+
+            st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
+            novos_imoveis["Data do Leilão"] = pd.to_datetime(novos_imoveis["Data do Leilão"], format="%d/%m/%Y", errors="coerce")
+            imprimir_imoveis(novos_imoveis)
+            st.divider()
     
-
-
-    novos_imoveis = verificar_novos_imoveis(df)
-
-    if not novos_imoveis.empty:
-        # Enviar alerta por e-mail
-        format_email_novos_imoveis(novos_imoveis)
-
-        st.success(f"{len(novos_imoveis)} NOVO(S) IMÓVEL(IS) ADICIONADO(S)!")
-        novos_imoveis["Data do Leilão"] = pd.to_datetime(novos_imoveis["Data do Leilão"], format="%d/%m/%Y", errors="coerce")
-        imprimir_imoveis(novos_imoveis)
-        st.divider()
+    except:
+        st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
     
     
     df_novo = pd.read_csv(ARQUIVO_DADOS_RECENTES)
