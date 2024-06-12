@@ -479,7 +479,7 @@ def main():
     df_filtrado = get_sidebar_filters(df_novo)
 
     #st.dataframe(df_novo)
-    st.write(f"Última Atualização de dados: {os.environ["ULTIMA_ATUALIZACAO"]}")
+    st.write(f"Última Atualização de dados: {os.environ['ULTIMA_ATUALIZACAO']}")
     st.write(f"Total de Imóveis: {len(df_filtrado)}")
 
     
