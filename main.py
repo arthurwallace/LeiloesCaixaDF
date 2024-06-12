@@ -2,7 +2,9 @@ import io
 import streamlit as st
 import pandas as pd
 import locale
+import os
 
+from dotenv import load_dotenv
 from trycourier import Courier
 import requests
 from bs4 import BeautifulSoup
@@ -11,6 +13,8 @@ from datetime import datetime
 
 UF = 'DF'
 ARQUIVO_DADOS_RECENTES = f"Dados_com_data_{UF}.csv"
+load_dotenv()
+
 
 def get_property_type(description):
     return description.split(",")[0].strip()
@@ -169,12 +173,14 @@ def verificar_novos_imoveis(df_atual):
     print(novos_imoveis)
     #df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
     if not novos_imoveis.empty or not imoveis_com_alteracao.empty:
-        print("Caiu aqui")
+        os.environ["ULTIMA_ATUALIZACAO"] = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
         df_atualizado = pd.concat([df_anterior, novos_imoveis, imoveis_com_alteracao])
+        df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
         df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         return novos_imoveis
     
     df_atualizado = df_anterior
+    df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
     df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
         
         
@@ -356,8 +362,8 @@ def imprimir_imoveis(df):
         
         data_formatada_segundo_leilao = pd.to_datetime(row["Data Segundo Leilão"], dayfirst=True).strftime("%d/%m/%Y") if "Data Segundo Leilão" in df.columns and pd.notna(row["Data Segundo Leilão"]) else ""
         horario_segundo_leilao = row['Horário Segundo Leilão'] if "Horário Segundo Leilão" in df.columns and pd.notna(row['Horário Segundo Leilão']) else ""
-        preco_segundo_leilao = locale.currency(row["Preço Segundo Leilão"], grouping=True).replace("$", "\\$")
-        desconto_segundo_leilao = (row["Valor de avaliação"] - row["Preço Segundo Leilão"])/row["Valor de avaliação"]*100
+        preco_segundo_leilao = locale.currency(row["Preço Segundo Leilão"], grouping=True).replace("$", "\\$") if "Preço Segundo Leilão" in df.columns and pd.notna(row['Preço Segundo Leilão']) else ""
+        desconto_segundo_leilao = (row["Valor de avaliação"] - row["Preço Segundo Leilão"])/row["Valor de avaliação"]*100  if "Preço Segundo Leilão" in df.columns and pd.notna(row['Preço Segundo Leilão']) else ""
         
         segundo_leilao_txt = f"‎\n\n:blue[**2º Leilão:**] **Data:** {data_formatada_segundo_leilao} - {horario_segundo_leilao} // **Preço:** :blue[**{preco_segundo_leilao}**]\n\n**Desconto 2º Leilão:** :blue[{round(desconto_segundo_leilao, 2)}%]\n\n‎\n\n" if pd.notna(row['Data Segundo Leilão']) else ''
         col1, col2 = st.columns([1.5, 3])
@@ -462,6 +468,8 @@ def main():
         st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
     
     
+    
+    
     df_novo = pd.read_csv(ARQUIVO_DADOS_RECENTES)
     df_novo = format_data_frame(df_novo)
     
@@ -471,6 +479,7 @@ def main():
     df_filtrado = get_sidebar_filters(df_novo)
 
     #st.dataframe(df_novo)
+    st.write(f"Última Atualização de dados: {os.environ["ULTIMA_ATUALIZACAO"]}")
     st.write(f"Total de Imóveis: {len(df_filtrado)}")
 
     
