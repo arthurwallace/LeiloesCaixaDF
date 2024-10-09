@@ -10,6 +10,9 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from datetime import datetime
+import pytz
+
+fuso_horario_brasil = pytz.timezone('America/Sao_Paulo')
 
 UF = 'DF'
 ARQUIVO_DADOS_RECENTES = f"Dados_com_data_{UF}.csv"
@@ -37,16 +40,49 @@ def send_email(subject, body):
 
 
 def get_data_leilao(url):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    # headers = {
+    #     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    # }
+    
+    cookies = {
+    '__uzmc': '72194867164301',
+    '__uzmd': '1728479185',
+    'SIMOV': 'ffffffff09ca9ec845525d5f4f58455e445a4a423660',
+    '_ga': 'GA1.1.443502605.1708610501',
+    '_ga_RD3F5P2Z1Q': 'GS1.3.1728407229.69.0.1728407229.60.0.0',
+    '_ga_PD5EBJFQ7X': 'GS1.1.1728478652.158.1.1728479187.0.0.0',
+    'ASPSESSIONIDAAADCART': 'BKEOMLJCHBLFGLKFGOJHNLPG',
+    'ASPSESSIONIDCCTCBBQS': 'DNMPKCADGHOMCHNOALBMIGFD',
+    # Continue adicionando os cookies necessários...
     }
+
+    # Headers copiados
+    headers = {
+        'Cache-Control': 'no-cache',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'Accept-Encoding': 'gzip, deflate, br, zstd',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Pragma': 'no-cache',
+        'Sec-Ch-Ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'cross-site',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1',
+        'X-Frame-Options': 'same-origin',
+        'X-Xss-Protection': '1; mode=block',
+        # Adicione mais headers se necessário...
+    }
+
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, cookies=cookies)
         soup = BeautifulSoup(response.text, 'html.parser')
         
         # Encontrar o elemento <i> com a classe 'fa-gavel'
         icone_datas = soup.find_all('i', {'class': 'fa-gavel'})
-        
         texto_valores = soup.find('div', class_='content').get_text(strip=True)
         
         # Verificar se o elemento foi encontrado
@@ -160,6 +196,7 @@ def verificar_novos_imoveis(df_atual):
                     #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Preço'] = preco_atual
                     #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Modalidade de venda'] = modalidade_atual
                     imoveis_com_alteracao = pd.concat([imoveis_com_alteracao, row.to_frame().T], ignore_index=True)
+                    imoveis_com_alteracao['Data Atualizacao'] = datetime.now(fuso_horario_brasil).strftime("%d/%m/%Y - %H:%M:%S")
                     df_anterior = df_anterior.drop((df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel]).index)
         
         imoveis_com_alteracao = format_data_frame(imoveis_com_alteracao, novos_imoveis=True)  
@@ -173,7 +210,7 @@ def verificar_novos_imoveis(df_atual):
     print(novos_imoveis)
     #df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
     if not novos_imoveis.empty or not imoveis_com_alteracao.empty:
-        os.environ["ULTIMA_ATUALIZACAO"] = datetime.now().strftime("%d/%m/%Y - %H:%M:%S")
+        os.environ["ULTIMA_ATUALIZACAO"] = datetime.now(fuso_horario_brasil).strftime("%d/%m/%Y - %H:%M:%S")
         df_atualizado = pd.concat([df_anterior, novos_imoveis, imoveis_com_alteracao])
         df_atualizado = pd.concat([df_atualizado, imoveis_removidos]).drop_duplicates(keep=False)
         df_atualizado.to_csv(ARQUIVO_DADOS_RECENTES, index=False)
@@ -272,7 +309,8 @@ def get_sidebar_filters(df):
         "Maior Avaliação",
         "Menor Avaliação",
         "Data mais próxima",
-        "Data mais longe"
+        "Data mais longe",
+        "Data Atualização"
     ]
     ordenacao = st.sidebar.selectbox("Ordenar por", opcoes_ordenacao, 6)
     
@@ -333,6 +371,8 @@ def get_sidebar_filters(df):
         df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=True)
     elif ordenacao == "Data mais longe":
         df_filtrado = df_filtrado.sort_values(by="Data do Leilão", ascending=False)
+    elif ordenacao == "Data Atualização":
+        df_filtrado = df_filtrado.sort_values(by="Data Atualizacao", ascending=False)
 
 
     return df_filtrado
@@ -345,6 +385,7 @@ def imprimir_imoveis(df):
         modalidade_venda = row["Modalidade de venda"]
         cidade_bairro_uf = f"{row['Cidade']}, {row['Bairro']} - {row['UF']}"
         descricao = row["Descrição"]
+        data_atualizacao = f"**Data Atualização:** {row['Data Atualizacao']}" if pd.notna(row["Data Atualizacao"]) else ""
         preco = locale.currency(row["Preço"], grouping=True).replace("$", "\\$")
         avaliacao = locale.currency(row["Valor de avaliação"], grouping=True)
         desconto = row["Desconto"]
@@ -358,7 +399,7 @@ def imprimir_imoveis(df):
         aceita_parcelamento = f":green[**Sim**]" if row['Aceita Parcelamento'] is True else f":red[**Não**]"
         aceita_consorcio = f":green[**Sim**]" if row['Aceita Consorcio'] is True else f":red[**Não**]"
         tem_acao = f":green[**Sim**]" if row['Tem Ação'] is True else f":red[**Não**]"
-        lista_acoes = row['Ações Judiciais']
+        lista_acoes = row['Ações Judiciais'] if pd.notna(row["Ações Judiciais"]) else ""
         
         data_formatada_segundo_leilao = pd.to_datetime(row["Data Segundo Leilão"], dayfirst=True).strftime("%d/%m/%Y") if "Data Segundo Leilão" in df.columns and pd.notna(row["Data Segundo Leilão"]) else ""
         horario_segundo_leilao = row['Horário Segundo Leilão'] if "Horário Segundo Leilão" in df.columns and pd.notna(row['Horário Segundo Leilão']) else ""
@@ -373,7 +414,7 @@ def imprimir_imoveis(df):
 
         with col2:
             with st.expander(
-                f"***{modalidade_venda}***\n\n**Data:** {data_formatada} - {horario}\n\n**Preço:** :green[**{preco}**] // **Avaliação:** {avaliacao} \n\n**Desconto:** {desconto}%\n\n{segundo_leilao_txt}\n\n{cidade_bairro_uf}\n\n**Financiamento:** {aceita_financiamento}\n\n**Ação Judicial:** {tem_acao}\n\n\n\n{descricao}"
+                f"***{modalidade_venda}***\n\n**Data:** {data_formatada} - {horario}\n\n{data_atualizacao}\n\n**Preço:** :green[**{preco}**] // **Avaliação:** {avaliacao} \n\n**Desconto:** {desconto}%\n\n{segundo_leilao_txt}\n\n{cidade_bairro_uf}\n\n**Financiamento:** {aceita_financiamento}\n\n**Ação Judicial:** {tem_acao}\n\n\n\n{descricao}"
             ):
                 st.divider()
                 st.write(f"**Modalidade de Venda:** {modalidade_venda}")

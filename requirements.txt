@@ -3,3 +3,4 @@ pandas
 trycourier==5.0.0
 beautifulsoup4
 python-dotenv==1.0.1
+pytz
