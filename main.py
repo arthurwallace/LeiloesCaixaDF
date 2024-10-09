@@ -499,6 +499,7 @@ def main():
         if response.status_code == 200:
             # Carregue os dados CSV
             content = response.content.decode("latin1")
+            print(content)
             df = pd.read_csv(io.StringIO(content), encoding="latin1", sep=";", skiprows=[0, 1])
             # st.dataframe(df)
             #print(df)
