@@ -202,7 +202,7 @@ def verificar_novos_imoveis(df_atual):
                     #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Preço'] = preco_atual
                     #df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel, 'Modalidade de venda'] = modalidade_atual
                     imoveis_com_alteracao = pd.concat([imoveis_com_alteracao, row.to_frame().T], ignore_index=True)
-                    imoveis_com_alteracao['Data Atualizacao'] = datetime.now(fuso_horario_brasil).strftime("%d/%m/%Y - %H:%M:%S")
+                    # imoveis_com_alteracao['Data Atualizacao'] = datetime.now(fuso_horario_brasil).strftime("%d/%m/%Y - %H:%M:%S")
                     df_anterior = df_anterior.drop((df_anterior.loc[df_anterior['N° do imóvel'] == n_imovel]).index)
         
         imoveis_com_alteracao = format_data_frame(imoveis_com_alteracao, novos_imoveis=True)  
@@ -291,7 +291,7 @@ def format_data_frame(df_original, novos_imoveis = False):
                     df.at[index, 'Data Segundo Leilão'] = data_segundo_leilao
                     df.at[index, 'Horário Segundo Leilão'] = horario_segundo_leilao
                     df.at[index, 'Preço Segundo Leilão'] = valor_segundo_leilao
-                    df.at[index, 'Data Atualizacao'] = None
+                    df.at[index, 'Data Atualizacao'] = datetime.now(fuso_horario_brasil).strftime("%d/%m/%Y - %H:%M:%S")
                         
                         
                     progress_value = 0
