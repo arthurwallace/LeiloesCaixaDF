@@ -285,6 +285,7 @@ def format_data_frame(df_original, novos_imoveis = False):
                     df.at[index, 'Data Segundo Leilão'] = data_segundo_leilao
                     df.at[index, 'Horário Segundo Leilão'] = horario_segundo_leilao
                     df.at[index, 'Preço Segundo Leilão'] = valor_segundo_leilao
+                    df.at[index, 'Data Atualizacao'] = None
                         
                         
                     progress_value = 0
@@ -506,6 +507,7 @@ def main():
             st.divider()
     
     except Exception as e:
+        print("Erro na busca da lista", e)
         print(e)
         st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
     
