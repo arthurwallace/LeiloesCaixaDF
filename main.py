@@ -30,11 +30,23 @@ def send_email(subject, body):
         response = client.send_message(
             message={
                 "to": [{"email": "arthur.wallace.silva@gmail.com"}, {"email": "givanildo.caldas@gmail.com"}],
-                "content": {"title": subject, "body": body}
+                "content": {
+                    "title": subject,
+                    'elements': [
+                        {
+                        "type": "action",
+                        "content": "Click me",
+                        "href": "https://example.com"
+                        }
+                    ]
+                }
             }
         )
+        
+        print(response)
 
     except Exception as e:
+        print(e)
         # Imprimir o erro em caso de exceção
         print(f"Erro ao enviar e-mail: {str(e)}")
 
@@ -451,6 +463,7 @@ def format_email_novos_imoveis(novos_imoveis):
     alert_subject = 'Leilão Caixa DF - Novos Imóveis Adicionados!'
     alert_body = f'Foram adicionados {len(novos_imoveis)} novos imóveis. Verifique a lista para mais detalhes.'
     alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
+    alert_body += '![Alt text](https://venda-imoveis.caixa.gov.br/fotos/F155551954258921.jpg "a title")'
     alert_body += formatar_novos_imoveis(novos_imoveis)
     alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
     send_email(alert_subject, alert_body)
@@ -509,7 +522,7 @@ def main():
     except Exception as e:
         print("Erro na busca da lista", e)
         print(e)
-        st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
+        st.error(f"Erro ao buscar novo arquivo de imóveis, carregando lista anterior! - {e}")
     
     
     
