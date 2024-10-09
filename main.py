@@ -32,13 +32,7 @@ def send_email(subject, body):
                 "to": [{"email": "arthur.wallace.silva@gmail.com"}, {"email": "givanildo.caldas@gmail.com"}],
                 "content": {
                     "title": subject,
-                    'elements': [
-                        {
-                        "type": "action",
-                        "content": "Click me",
-                        "href": "https://example.com"
-                        }
-                    ]
+                    "body": body,
                 }
             }
         )
