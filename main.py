@@ -494,7 +494,7 @@ def main():
     # Faça a solicitação GET com os headers
     try:
         response = requests.get(url_csv, headers=headers)
-
+        print(response)
         # Verifique se a solicitação foi bem-sucedida
         if response.status_code == 200:
             # Carregue os dados CSV
