@@ -505,8 +505,9 @@ def main():
             imprimir_imoveis(novos_imoveis)
             st.divider()
     
-    except:
+    except Exception as e:
         st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
+        print(e)
     
     
     
