@@ -463,7 +463,6 @@ def format_email_novos_imoveis(novos_imoveis):
     alert_subject = 'Leilão Caixa DF - Novos Imóveis Adicionados!'
     alert_body = f'Foram adicionados {len(novos_imoveis)} novos imóveis. Verifique a lista para mais detalhes.'
     alert_body += '\n\nDetalhes dos Novos Imóveis:\n\n'
-    alert_body += '![Alt text](https://venda-imoveis.caixa.gov.br/fotos/F155551954258921.jpg "a title")'
     alert_body += formatar_novos_imoveis(novos_imoveis)
     alert_body += '\n\nConfira em: https://leiloescaixadf.streamlit.app/\n\n'
     send_email(alert_subject, alert_body)
