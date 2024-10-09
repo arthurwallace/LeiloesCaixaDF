@@ -506,8 +506,8 @@ def main():
             st.divider()
     
     except Exception as e:
-        st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
         print(e)
+        st.error("Erro ao buscar novo arquivo de imóveis, carregando lista anterior!")
     
     
     
